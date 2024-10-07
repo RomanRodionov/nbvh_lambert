@@ -22,6 +22,7 @@
 #include <chrono>
 #include <memory>
 #include <vector>
+#include <functional>
 
 namespace ntwr {
 
@@ -84,7 +85,7 @@ namespace neural {
 
     class NeuralBVHRenderer : public Renderer {
     public:
-        NeuralBVHRenderer(std::shared_ptr<CudaBackend> cuda_backend);
+        NeuralBVHRenderer(std::shared_ptr<CudaBackend> cuda_backend, std::function<void()> train_callback);
 
         ~NeuralBVHRenderer();
 
@@ -185,7 +186,7 @@ namespace neural {
         bool m_load_save_neural_bvh_and_weights = false;
 
         /***** Configurable Members **********/
-
+        std::function<void()> m_train_callback;
         std::unique_ptr<NeuralBVHModule> m_neural_module;
         BVHModuleType m_bvh_module_type = BVHModuleType::Path;
 

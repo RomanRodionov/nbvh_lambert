@@ -16,7 +16,7 @@
 namespace ntwr {
 namespace neural {
 
-    NeuralBVHRenderer::NeuralBVHRenderer(std::shared_ptr<CudaBackend> cuda_backend) : m_backend(std::move(cuda_backend))
+    NeuralBVHRenderer::NeuralBVHRenderer(std::shared_ptr<CudaBackend> cuda_backend, std::function<void()> train_callback) : m_backend(std::move(cuda_backend)), m_train_callback(train_callback)
     {
         logger(LogLevel::Info, "Initializing Neural BVH Renderer");
 

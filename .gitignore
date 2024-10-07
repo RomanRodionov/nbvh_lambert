@@ -10,3 +10,7 @@ __pycache__/
 build/
 
 imgui.ini
+
+scene_data/**/results/**
+
+out/

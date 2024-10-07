@@ -75,11 +75,15 @@ namespace {
 
 RenderApp::RenderApp(RenderAppConfigs render_app_configs,
                      std::filesystem::path scene_filename,
-                     RenderDisplay *render_display)
-    : m_render_app_configs(render_app_configs)
+                     RenderDisplay *render_display,
+                     const std::optional<std::string> &cli_save)
+    : m_render_app_configs(render_app_configs), m_cli_save_path(cli_save)
 {
     if (scene_filename != "") {
         scene = std::make_unique<Scene>(scene_filename);
+    }
+    if (m_cli_save_path) {
+      //  hide_ui = true;
     }
 
     if (!display && render_display)
@@ -336,7 +340,12 @@ void RenderApp::run()
     // Create the renderer and add it to the application
 
     std::unique_ptr<neural::NeuralBVHRenderer> neural_bvh_renderer_renderer =
-        std::make_unique<neural::NeuralBVHRenderer>(cuda_backend);
+        std::make_unique<neural::NeuralBVHRenderer>(cuda_backend, [this]() {
+            if(m_cli_save_path) {
+                save_framebuffer(*this->m_cli_save_path);
+                exit(0);
+            }
+        });
 
     register_renderer(neural_bvh_renderer_renderer.get());
 

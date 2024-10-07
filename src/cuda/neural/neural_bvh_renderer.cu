@@ -290,6 +290,8 @@ namespace neural {
             if (m_training_step >= m_max_training_steps) {
                 m_run_optimisation = false;
 
+                //m_train_callback();
+
                 if (m_using_validation_mode) {
                     process_validation_config_end();
                 }
@@ -365,6 +367,11 @@ namespace neural {
             m_accumulated_spp++;
             // Automatically stop inference
             if (m_accumulated_spp == m_max_accumulated_spp) {
+
+                if(m_training_step >= m_max_training_steps) {
+                    m_train_callback();
+                }
+                
                 if (m_backend->m_cuda_scene_constants.ema_accumulate) {
                     // Restart EMA weighting instead of stopping inference
                     m_accumulated_spp = 0;
