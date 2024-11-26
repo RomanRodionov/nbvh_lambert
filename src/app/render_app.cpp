@@ -76,8 +76,9 @@ namespace {
 RenderApp::RenderApp(RenderAppConfigs render_app_configs,
                      std::filesystem::path scene_filename,
                      RenderDisplay *render_display,
-                     const std::optional<std::string> &cli_save)
-    : m_render_app_configs(render_app_configs), m_cli_save_path(cli_save)
+                     const std::optional<std::string> &cli_save,
+                     const std::optional<std::string> &camera_override)
+    : m_render_app_configs(render_app_configs), m_cli_save_path(cli_save), m_camera_override(camera_override)
 {
     if (scene_filename != "") {
         scene = std::make_unique<Scene>(scene_filename);
@@ -354,6 +355,20 @@ void RenderApp::run()
     ImGuiIO &io = ImGui::GetIO();
 
     auto renderer = renderers[active_renderer_variant];
+
+
+    if (m_camera_override) {
+
+        neural::NeuralBVHRenderer *nrenderer =
+                                    (neural::NeuralBVHRenderer *)renderers[active_renderer_variant];
+
+        std::ifstream input_file{*m_camera_override};
+
+        nlohmann::json full_config = nlohmann::json::parse(input_file);
+
+        nrenderer->load_camera_override(full_config["camera"]);
+
+    }
 
     bool changed_renderer  = false;
     bool changed_camera    = false;

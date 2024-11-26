@@ -136,6 +136,8 @@ namespace neural {
                                    bool load_bvh_and_network,
                                    bool same_base_config_inference = false);
 
+        void load_camera_override(nlohmann::json config);
+
     private:
         CudaSceneData learning_scene_data();
 

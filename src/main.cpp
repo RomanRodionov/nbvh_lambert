@@ -21,17 +21,21 @@ int main(int argc, char *argv[])
 {
     if (argc < 1) {
         logger(LogLevel::Info,
-               "Usage: %s [obj_scene_filename] [validation_mode (true/false)] [config1] [config2] {-o [output_filename]}",
+               "Usage: %s [obj_scene_filename] [validation_mode (true/false)] {-c [camera]} [config1] [config2] {-o [output_filename]}",
                argv[0]);
         return 1;
     }
     /*patch begin*/
     int c;
     std::optional<std::string> output_file{};
+    std::optional<std::string> camera_file{};
     while((c = getopt(argc, argv, "o:")) != -1) {
         switch(c) {
         case 'o':
             output_file.emplace(optarg);
+            break;
+        case 'c':
+            camera_file.emplace(optarg);
             break;
         case '?':
             std::cerr << "[!] Unknown argument." << std::endl; 
@@ -80,7 +84,7 @@ int main(int argc, char *argv[])
 
     // Create main app and attach display to it
     std::unique_ptr<RenderApp> render_app =
-        std::make_unique<RenderApp>(render_app_configs, scene_filename, display.get(), output_file);
+        std::make_unique<RenderApp>(render_app_configs, scene_filename, display.get(), output_file, camera_file);
 
     try {
         render_app->run();

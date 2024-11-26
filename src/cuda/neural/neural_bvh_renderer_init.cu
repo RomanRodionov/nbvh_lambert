@@ -540,6 +540,23 @@ namespace neural {
         logger(LogLevel::Info, "Done!");
     }
 
+    void NeuralBVHRenderer::load_camera_override(tcnn::json config)
+    {
+        auto &scene_camera = m_backend->get_camera();
+
+        glm::mat4 camera_mat4 = scene_camera.transform();
+        if (config.contains("matrix")) {
+            float camera_trafo[16];
+            for (size_t i = 0; i < 16; i++) {
+                camera_trafo[i] = config["matrix"].at(i).get<float>();
+            }
+            camera_mat4 = glm::make_mat4(camera_trafo);
+        }
+        scene_camera.set_transform(camera_mat4);
+        scene_camera.set_fovy_from_radian(config.value("yfov", glm::radians(scene_camera.fovy())));
+        m_backend->update_camera(scene_camera);
+    }
+
     void NeuralBVHRenderer::load_config(bool load_bvh_and_network)
     {
         const std::string base_config_name    = std::string(m_base_config_name);
