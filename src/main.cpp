@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     int c;
     std::optional<std::string> output_file{};
     std::optional<std::string> camera_file{};
-    while((c = getopt(argc, argv, "o:")) != -1) {
+    while((c = getopt(argc, argv, "o:c:")) != -1) {
         switch(c) {
         case 'o':
             output_file.emplace(optarg);

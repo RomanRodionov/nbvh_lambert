@@ -24,6 +24,9 @@ namespace neural {
         assert(m_backend->m_neural_bvh_indices.size() > 0);
         m_bvh_const.neural_bvh_idx = m_backend->m_neural_bvh_indices[0];
 
+        m_run_optimisation = true;
+        m_run_inference = true;
+
         if (!loss_registered) {
             // Register our custom loss
             tcnn::register_loss<tcnn::network_precision_t>("PathTracingComposite", [](const tcnn::json &loss) {
@@ -552,6 +555,7 @@ namespace neural {
             }
             camera_mat4 = glm::make_mat4(camera_trafo);
         }
+
         scene_camera.set_transform(camera_mat4);
         scene_camera.set_fovy_from_radian(config.value("yfov", glm::radians(scene_camera.fovy())));
         m_backend->update_camera(scene_camera);

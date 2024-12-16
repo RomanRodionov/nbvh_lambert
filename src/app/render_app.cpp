@@ -344,6 +344,7 @@ void RenderApp::run()
         std::make_unique<neural::NeuralBVHRenderer>(cuda_backend, [this]() {
             if(m_cli_save_path) {
                 save_framebuffer(*this->m_cli_save_path);
+                logger(LogLevel::Info, "Saving image...");
                 exit(0);
             }
         });
@@ -367,6 +368,7 @@ void RenderApp::run()
         nlohmann::json full_config = nlohmann::json::parse(input_file);
 
         nrenderer->load_camera_override(full_config["camera"]);
+//        std::cout << full_config["camera"] << std::endl;
 
     }
 
