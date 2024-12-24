@@ -564,7 +564,7 @@ namespace neural {
     void NeuralBVHRenderer::load_camera_params(const float params[6], float fov)
     {
         auto &scene_camera = m_backend->get_camera();
-            
+
         glm::vec3 origin{params[0], params[1], params[2]};
         glm::vec3 dir{params[3], params[4], params[5]};
         glm::vec3 up{0, 1, 0};
@@ -576,7 +576,7 @@ namespace neural {
             -dir.x,  -dir.y,  -dir.z,   glm::dot(dir, origin),
             0.0f,    0.0f,    0.0f,     1.0f
         };
-        scene_camera.set_transform(camera_mat4);
+        scene_camera.set_transform(glm::inverse(camera_mat4));
         scene_camera.set_fovy_from_radian(glm::radians(fov));
         m_backend->update_camera(scene_camera);
     }
