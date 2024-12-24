@@ -576,7 +576,7 @@ namespace neural {
             -dir.x,  -dir.y,  -dir.z,   glm::dot(dir, origin),
             0.0f,    0.0f,    0.0f,     1.0f
         };
-        scene_camera.set_transform(glm::inverse(camera_mat4));
+        scene_camera.set_transform(camera_mat4);
         scene_camera.set_fovy_from_radian(glm::radians(fov));
         m_backend->update_camera(scene_camera);
     }
