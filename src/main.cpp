@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 
 #include "app/render_app.h"
 #include "app/render_display.h"
@@ -10,32 +11,66 @@
 #include "cuda/cuda_backend.h"
 #include "utils/logger.h"
 
-#include <optional>
+#include "utils/args.h"
+
 #include <getopt.h>
 
 using namespace ntwr;
 
-std::optional<std::string> cli_save_path;
+void parse_res(const std::string &str)
+{
+    using patched::args;
+    size_t pos = str.find(" ");
+
+    args.width = std::stoi(str.substr(0, pos));
+    args.height = std::stoi(str.substr(pos + 1, std::string::npos));
+
+}
+
+void parse_camera(const std::string &str) 
+{
+    using patched::args;
+
+    size_t pos = str.find(" ");
+    size_t prev = 0ul;
+
+    for(int i = 0; i < 6; ++i) {
+        args.camera_param[i] = std::stof(str.substr(prev, pos));
+        prev = pos + 1;
+        pos = str.find(" ", prev);
+    }
+    args.camera_fov = std::stof(str.substr(prev, pos));
+    args.use_camera_params = true;
+}
 
 int main(int argc, char *argv[])
 {
+    using patched::args;
+
     if (argc < 1) {
         logger(LogLevel::Info,
-               "Usage: %s [obj_scene_filename] [validation_mode (true/false)] {-c [camera]} [config1] [config2] {-o [output_filename]}",
+               "Usage: %s [obj_scene_filename] [validation_mode (true/false)] {-c [camera] / -t [origin] [direction] [fov]} [config1] [config2] {-o [output_filename]}",
                argv[0]);
         return 1;
     }
     /*patch begin*/
     int c;
-    std::optional<std::string> output_file{};
-    std::optional<std::string> camera_file{};
-    while((c = getopt(argc, argv, "o:c:")) != -1) {
+    while((c = getopt(argc, argv, "o:c:s:r:t:")) != -1) {
         switch(c) {
         case 'o':
-            output_file.emplace(optarg);
+            args.output_file.emplace(optarg);
             break;
         case 'c':
-            camera_file.emplace(optarg);
+            args.camera_file.emplace(optarg);
+            break;
+        case 's':
+            args.spp = std::stoi(std::string(optarg));
+            break;
+        case 'r':
+            parse_res(std::string(optarg));
+            break;
+        case 't':
+            parse_camera(std::string(optarg));
             break;
         case '?':
             std::cerr << "[!] Unknown argument." << std::endl; 
@@ -84,7 +119,7 @@ int main(int argc, char *argv[])
 
     // Create main app and attach display to it
     std::unique_ptr<RenderApp> render_app =
-        std::make_unique<RenderApp>(render_app_configs, scene_filename, display.get(), output_file, camera_file);
+        std::make_unique<RenderApp>(render_app_configs, scene_filename, display.get());
 
     try {
         render_app->run();

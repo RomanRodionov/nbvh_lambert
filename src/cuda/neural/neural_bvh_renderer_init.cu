@@ -561,6 +561,29 @@ namespace neural {
         m_backend->update_camera(scene_camera);
     }
 
+    void NeuralBVHRenderer::load_camera_params(const float params[6], float fov)
+    {
+        glm::vec3 origin{params[0], params[1], params[2]};
+        glm::vec3 dir{params[3], params[4], params[5]};
+        glm::vec3 up{0, 1, 0};
+        glm::vec3 right = glm::cross(dir, up);
+
+        glm::mat4 camera_mat4{
+            right.x, right.y, right.z, -glm::dot(right, origin),
+            up.x,    up.y,    up.z,    -glm::dot(up, origin),
+            -dir.x,  -dir.y,  -dir.z,   glm::dot(dir, origin),
+            0.0f,    0.0f,    0.0f,     1.0f
+        };
+        scene_camera.set_transform(camera_mat4);
+        scene_camera.set_fovy_from_radian(glm::radians(fov));
+        m_backend->update_camera(scene_camera);
+    }
+
+    void NeuralBVHRenderer::set_max_spp(int spp)
+    {
+        m_max_accumulated_spp = spp;
+    }
+
     void NeuralBVHRenderer::load_config(bool load_bvh_and_network)
     {
         const std::string base_config_name    = std::string(m_base_config_name);

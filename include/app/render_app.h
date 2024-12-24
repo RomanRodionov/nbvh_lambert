@@ -20,7 +20,7 @@ static constexpr size_t OUTPUT_FILENAME_SIZE = 512;
 
 class RenderApp {
 public:
-    RenderApp(RenderAppConfigs render_app_configs, std::filesystem::path scene_filename, RenderDisplay *display, const std::optional<std::string> &cli_save_mode = {}, const std::optional<std::string> &camera_override = {});
+    RenderApp(RenderAppConfigs render_app_configs, std::filesystem::path scene_filename, RenderDisplay *display);
     ~RenderApp();
 
     void register_renderer(Renderer *renderer);
@@ -67,9 +67,6 @@ public:
 
     ImGui::FileBrowser m_exr_file_dialog;
     ImGui::FileBrowser m_scene_file_dialog;
-
-    std::optional<std::string> m_cli_save_path;
-    std::optional<std::string> m_camera_override;
 
     std::unique_ptr<Scene> scene = nullptr;
 };

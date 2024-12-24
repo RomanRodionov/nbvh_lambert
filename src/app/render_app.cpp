@@ -17,8 +17,12 @@
 #include <filesystem>
 #include <iostream>
 
+#include <GLFW/glfw3.h>
+
 #include "glm_pch.h"
 #include "ntwr.h"
+
+#include "utils/args.h"
 
 namespace ntwr {
 namespace {
@@ -75,16 +79,11 @@ namespace {
 
 RenderApp::RenderApp(RenderAppConfigs render_app_configs,
                      std::filesystem::path scene_filename,
-                     RenderDisplay *render_display,
-                     const std::optional<std::string> &cli_save,
-                     const std::optional<std::string> &camera_override)
-    : m_render_app_configs(render_app_configs), m_cli_save_path(cli_save), m_camera_override(camera_override)
+                     RenderDisplay *render_display)
+    : m_render_app_configs(render_app_configs)
 {
     if (scene_filename != "") {
         scene = std::make_unique<Scene>(scene_filename);
-    }
-    if (m_cli_save_path) {
-      //  hide_ui = true;
     }
 
     if (!display && render_display)
@@ -342,8 +341,8 @@ void RenderApp::run()
 
     std::unique_ptr<neural::NeuralBVHRenderer> neural_bvh_renderer_renderer =
         std::make_unique<neural::NeuralBVHRenderer>(cuda_backend, [this]() {
-            if(m_cli_save_path) {
-                save_framebuffer(*this->m_cli_save_path);
+            if(patched::args.output_file) {
+                save_framebuffer(*patched::args.output_file);
                 logger(LogLevel::Info, "Saving image...");
                 exit(0);
             }
@@ -357,19 +356,30 @@ void RenderApp::run()
 
     auto renderer = renderers[active_renderer_variant];
 
-
-    if (m_camera_override) {
-
-        neural::NeuralBVHRenderer *nrenderer =
+    neural::NeuralBVHRenderer *nrenderer =
                                     (neural::NeuralBVHRenderer *)renderers[active_renderer_variant];
 
-        std::ifstream input_file{*m_camera_override};
+    if (patched::args.camera_file) {
+
+        std::ifstream input_file{*patched::args.camera_file};
 
         nlohmann::json full_config = nlohmann::json::parse(input_file);
 
         nrenderer->load_camera_override(full_config["camera"]);
 //        std::cout << full_config["camera"] << std::endl;
 
+    }
+    else if (patched::args.use_camera_params) {
+        nrenderer->load_camera_params(patched::args.camera_param, patched::args.camera_fov);
+    }
+
+    if(patched::args.width > 0 && patched::args.height > 0) {
+       glfwSetWindowSize(nrenderer->render_backend()->get_display().glfw_window(),
+                              patched::args.width,
+                              patched::args.height);
+    }
+    if(patched::args.spp > 0) {
+       nrenderer->set_max_spp(patched::args.spp);
     }
 
     bool changed_renderer  = false;
