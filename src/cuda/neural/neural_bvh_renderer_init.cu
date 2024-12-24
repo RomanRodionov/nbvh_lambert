@@ -563,6 +563,8 @@ namespace neural {
 
     void NeuralBVHRenderer::load_camera_params(const float params[6], float fov)
     {
+        auto &scene_camera = m_backend->get_camera();
+            
         glm::vec3 origin{params[0], params[1], params[2]};
         glm::vec3 dir{params[3], params[4], params[5]};
         glm::vec3 up{0, 1, 0};

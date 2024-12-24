@@ -4,7 +4,7 @@
 #include <string>
 
 namespace patched {
-    struct AArrgs
+    struct AArgs
     {
         std::optional<std::string> camera_file;
         std::optional<std::string> output_file;
@@ -17,7 +17,7 @@ namespace patched {
         int max_path = -1;
     };
 
-    extern AArrgs args;
+    extern AArgs args;
 
 }
 #endif
