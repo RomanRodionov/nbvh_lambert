@@ -566,7 +566,7 @@ namespace neural {
         auto &scene_camera = m_backend->get_camera();
 
         glm::vec3 origin{params[0], params[1], params[2]};
-        glm::vec3 dir{params[3], params[4], params[5]};
+        glm::vec3 dir = glm::normalize(glm::vec3{params[3], params[4], params[5]});
         glm::vec3 up{0, 1, 0};
         glm::vec3 right = glm::cross(dir, up);
 
