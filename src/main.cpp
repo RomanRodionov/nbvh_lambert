@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 
     if (argc < 1) {
         logger(LogLevel::Info,
-               "Usage: %s [obj_scene_filename] [validation_mode (true/false)] {-c [camera] / -t [origin] [direction] [fov]} [config1] [config2] {-o [output_filename]}",
+               "Usage: %s [obj_scene_filename] [validation_mode (true/false)] {-c [camera] / -t [origin] [direction] [fov]} {-s [max_spp]} {-r [width] [height]} [config1] [config2] {-o [output_filename]}",
                argv[0]);
         return 1;
     }
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 
     /*patch end*/
 
-    glm::uvec2 window_size(1920, 1080);
+    glm::uvec2 window_size(args.width, args.height);
 
     // Create display
     std::unique_ptr<RenderDisplay> display = std::make_unique<RenderDisplay>(window_size);

@@ -9,8 +9,8 @@ namespace patched {
         std::optional<std::string> camera_file;
         std::optional<std::string> output_file;
         int spp = -1;
-        int width = -1;
-        int height = -1;
+        int width = 1920;
+        int height = 1080;
         bool use_camera_params = false;
         float camera_param[6];
         float camera_fov;

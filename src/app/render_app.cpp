@@ -373,10 +373,10 @@ void RenderApp::run()
         nrenderer->load_camera_params(patched::args.camera_param, patched::args.camera_fov);
     }
 
-    if(patched::args.width > 0 && patched::args.height > 0) {
-        nrenderer->set_resolution(patched::args.width, patched::args.height);
-    }
-    
+    //if(patched::args.width > 0 && patched::args.height > 0) {
+    //    nrenderer->set_resolution(patched::args.width, patched::args.height);
+    //}
+
     if(patched::args.spp > 0) {
        nrenderer->set_max_spp(patched::args.spp);
     }
