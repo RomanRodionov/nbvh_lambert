@@ -584,6 +584,11 @@ namespace neural {
         m_max_accumulated_spp = spp;
     }
 
+    void NeuralBVHRenderer::set_resolution(int w, int h)
+    {
+        glfwSetWindowSize(m_backend->get_display().glfw_window(), w, h);
+    }
+
     void NeuralBVHRenderer::load_config(bool load_bvh_and_network)
     {
         const std::string base_config_name    = std::string(m_base_config_name);

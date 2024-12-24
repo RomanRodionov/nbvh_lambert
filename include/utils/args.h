@@ -6,7 +6,7 @@
 namespace patched {
     struct AArrgs
     {
-        std::optional<str::string> camera_file;
+        std::optional<std::string> camera_file;
         std::optional<std::string> output_file;
         int spp = -1;
         int width = -1;

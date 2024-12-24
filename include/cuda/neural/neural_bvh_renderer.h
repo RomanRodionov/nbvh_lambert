@@ -139,6 +139,7 @@ namespace neural {
         void load_camera_override(nlohmann::json config);
         void load_camera_params(const float params[6], float fov);
         void set_max_spp(int spp);
+        void set_resolution(int w, int h);
     private:
         CudaSceneData learning_scene_data();
 

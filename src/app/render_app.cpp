@@ -374,10 +374,9 @@ void RenderApp::run()
     }
 
     if(patched::args.width > 0 && patched::args.height > 0) {
-       glfwSetWindowSize(nrenderer->render_backend()->get_display().glfw_window(),
-                              patched::args.width,
-                              patched::args.height);
+        nrenderer->set_resolution(patched::args.width, patched::args.height);
     }
+    
     if(patched::args.spp > 0) {
        nrenderer->set_max_spp(patched::args.spp);
     }
