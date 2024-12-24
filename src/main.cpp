@@ -31,6 +31,10 @@ void parse_camera(const std::string &str)
 {
     using patched::args;
 
+    for(char &c : str) {
+        if(c == 'm') c = '-';
+    }
+
     size_t pos = str.find(" ");
     size_t prev = 0ul;
 
