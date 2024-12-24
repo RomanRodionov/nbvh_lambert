@@ -17,7 +17,7 @@
 
 using namespace ntwr;
 
-void parse_res(const std::string &str)
+void parse_res(std::string str)
 {
     using patched::args;
     size_t pos = str.find(" ");
@@ -27,12 +27,12 @@ void parse_res(const std::string &str)
 
 }
 
-void parse_camera(const std::string &str) 
+void parse_camera(std::string str) 
 {
     using patched::args;
 
-    for(char &c : str) {
-        if(c == 'm') c = '-';
+    for(int i = 0; i < str.size(); ++i) {
+        if(str[i] == 'm') str[i] = '-';
     }
 
     size_t pos = str.find(" ");
