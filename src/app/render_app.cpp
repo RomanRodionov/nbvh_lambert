@@ -384,6 +384,10 @@ void RenderApp::run()
     if(patched::args.spp > 0) {
        nrenderer->set_max_spp(patched::args.spp);
     }
+    if(patched::args.use_nbvh_params) {
+        std::cout << "Set params" << std::endl ;
+        nrenderer->set_nbvh_params(patched::args.nbvh_param);
+    }
 
     bool changed_renderer  = false;
     bool changed_camera    = false;

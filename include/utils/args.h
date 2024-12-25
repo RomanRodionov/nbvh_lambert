@@ -15,6 +15,11 @@ namespace patched {
         bool use_camera_params = false;
         float camera_param[6];
         float camera_fov;
+
+
+        bool use_nbvh_params = false;
+        int nbvh_param[3];
+
         int max_path = -1;
         bool inference_mode = false;
     };

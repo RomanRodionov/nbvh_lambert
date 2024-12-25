@@ -28,6 +28,24 @@ void parse_res(std::string str)
 
 }
 
+void parse_nbvh_params(std::string str)
+{
+    using patched::args;
+
+    size_t pos = str.find(" ");
+    size_t prev = 0ul;
+
+    //1 - 
+
+    for(int i = 0; i < 3; ++i) {
+        args.nbvh_param[i] = std::stoi(str.substr(prev, pos));
+        prev = pos + 1;
+        pos = str.find(" ", prev);
+    }
+    args.use_nbvh_params = true;
+}
+
+
 void parse_camera(std::string str) 
 {
     using patched::args;
@@ -46,9 +64,6 @@ void parse_camera(std::string str)
     }
     args.camera_fov = std::stof(str.substr(prev, pos));
     args.use_camera_params = true;
-    for(int i = 0; i < 6; ++i) {
-        std::cout << args.camera_param[i] << std::endl;
-    }
 }
 
 int main(int argc, char *argv[])
@@ -57,13 +72,13 @@ int main(int argc, char *argv[])
 
     if (argc < 1) {
         logger(LogLevel::Info,
-               "Usage: %s [obj_scene_filename] [validation_mode (true/false)] {-c [camera] / -t [origin] [direction] [fov]} {-s [max_spp]} {-r [width] [height]} [config1] [config2] {-o [output_filename]}",
+               "Usage: %s [obj_scene_filename] [validation_mode (true/false)] {-n [res] [n_levels] [log2_hashmap_size]} {-c [camera] / -t [origin] [direction] [fov]} {-s [max_spp]} {-r [width] [height]} [config1] [config2] {-o [output_filename]}",
                argv[0]);
         return 1;
     }
     /*patch begin*/
     int c;
-    while((c = getopt(argc, argv, "o:c:s:r:t:i")) != -1) {
+    while((c = getopt(argc, argv, "n:o:c:s:r:t:i")) != -1) {
         switch(c) {
         case 'o':
             args.output_file.emplace(optarg);
@@ -79,6 +94,9 @@ int main(int argc, char *argv[])
             break;
         case 't':
             parse_camera(std::string(optarg));
+            break;
+        case 'n':
+            parse_nbvh_params(std::string(optarg));
             break;
         case 'i':
             args.inference_mode = true;

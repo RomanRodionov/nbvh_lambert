@@ -411,6 +411,20 @@ namespace neural {
         }
     }
 
+    void NeuralBVHRenderer::set_nbvh_params(int params[3])
+    {
+        auto &opts = m_neural_module->m_segment_direction_hashgrid_options;
+        opts.base_resolution = params[0];
+        opts.n_levels = params[1];
+        opts.log2_hashmap_size = params[2];
+
+        std::cout << opts.base_resolution << " " << opts.n_levels << " " << opts.log2_hashmap_size << std::endl;
+
+        m_reset_inference_data = true;
+        m_reset_learning_data  = true;
+
+    }
+
     void NeuralBVHRenderer::save_config(bool save_bvh_and_network)
     {
         const std::string base_config_name    = std::string(m_base_config_name);
@@ -723,8 +737,10 @@ namespace neural {
                 .c_str(),
             encoding_types,
             ARRAY_SIZE(encoding_types));
-        m_neural_module->m_segment_direction_hashgrid_options.from_json(
-            direction_encoding_config.value("hashgrid_options", json::object()));
+        if(!patched::args.use_nbvh_params) {
+            m_neural_module->m_segment_direction_hashgrid_options.from_json(
+                direction_encoding_config.value("hashgrid_options", json::object()));
+        }
 
         switch (m_bvh_module_type) {
         case BVHModuleType::Path: {
