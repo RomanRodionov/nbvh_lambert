@@ -45,6 +45,9 @@ void parse_camera(std::string str)
     }
     args.camera_fov = std::stof(str.substr(prev, pos));
     args.use_camera_params = true;
+    for(int i = 0; i < 6; ++i) {
+        std::cout << args.camera_param[i] << std::endl;
+    }
 }
 
 int main(int argc, char *argv[])

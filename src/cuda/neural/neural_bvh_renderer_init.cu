@@ -571,24 +571,23 @@ namespace neural {
         auto &scene_camera = m_backend->get_camera();
 
         glm::vec3 origin{params[0], params[1], params[2]};
+
+
         glm::vec3 dir = glm::normalize(glm::vec3{params[3], params[4], params[5]});
+
+
         glm::vec3 up{0, 1, 0};
         glm::vec3 right = glm::cross(dir, up);
 
         glm::mat4 camera_mat4{
-            right.x, right.y, right.z, -glm::dot(right, origin),
-            up.x,    up.y,    up.z,    -glm::dot(up, origin),
-            -dir.x,  -dir.y,  -dir.z,   glm::dot(dir, origin),
-            0.0f,    0.0f,    0.0f,     1.0f
+            right.x, right.y, right.z, 0.0f,
+            up.x,    up.y,    up.z,    0.0f,
+            -dir.x,  -dir.y,  -dir.z,  0.0f,
+            origin.x,    origin.y,    origin.z,    1.0f
         };
-        scene_camera.set_transform(camera_mat4);
+        scene_camera.set_transform(glm::inverse(camera_mat4));
         scene_camera.set_fovy_from_radian(glm::radians(fov));
         m_backend->update_camera(scene_camera);
-
-        auto o = scene_camera.origin();
-        std::cout << o.x << " " << o.y << " " << o.z << std::endl;
-        auto d = scene_camera.dir();
-        std::cout << o.x << " " << o.y << " " << o.z << std::endl;
     }
 
     void NeuralBVHRenderer::set_max_spp(int spp)
