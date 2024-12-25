@@ -31,9 +31,13 @@ public:
         frame_times.push_back(frame_duration.count());
     }
 
-    void write_last_to_stream(std::ostream &str)
+    void write_last_to_stream(std::ostream &str, int spp)
     {
-        str << frame_times.back() << std::endl;
+        double time = 0.0f;
+        for(int i = frame_times.size() - spp; i < frame_times.size(); ++i) {
+            time += frame_times[i];
+        }
+        str << "Time: " << time << "ms" << std::endl;
     }
 
     void write_to_file(std::string filename, std::vector<float> *losses = nullptr)

@@ -359,6 +359,10 @@ void RenderApp::run()
     neural::NeuralBVHRenderer *nrenderer =
                                     (neural::NeuralBVHRenderer *)renderers[active_renderer_variant];
 
+    if(patched::args.inference_mode) {
+        nrenderer->load_config(true);
+    }
+
     if (patched::args.camera_file) {
 
         std::ifstream input_file{*patched::args.camera_file};

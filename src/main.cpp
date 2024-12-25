@@ -22,6 +22,7 @@ void parse_res(std::string str)
     using patched::args;
     size_t pos = str.find(" ");
 
+    args.res = true;
     args.width = std::stoi(str.substr(0, pos));
     args.height = std::stoi(str.substr(pos + 1, std::string::npos));
 
@@ -62,7 +63,7 @@ int main(int argc, char *argv[])
     }
     /*patch begin*/
     int c;
-    while((c = getopt(argc, argv, "o:c:s:r:t:")) != -1) {
+    while((c = getopt(argc, argv, "o:c:s:r:t:i")) != -1) {
         switch(c) {
         case 'o':
             args.output_file.emplace(optarg);
@@ -79,6 +80,9 @@ int main(int argc, char *argv[])
         case 't':
             parse_camera(std::string(optarg));
             break;
+        case 'i':
+            args.inference_mode = true;
+            break;
         case '?':
             std::cerr << "[!] Unknown argument." << std::endl; 
             return false;
@@ -90,6 +94,8 @@ int main(int argc, char *argv[])
     /*patch end*/
 
     glm::uvec2 window_size(args.width, args.height);
+
+    std::cout << args.width << " " << args.height << std::endl;
 
     // Create display
     std::unique_ptr<RenderDisplay> display = std::make_unique<RenderDisplay>(window_size);

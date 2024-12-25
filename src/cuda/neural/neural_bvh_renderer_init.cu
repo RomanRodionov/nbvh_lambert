@@ -13,6 +13,8 @@
 
 #include <tiny-cuda-nn/loss.h>
 
+#include "utils/args.h"
+
 #include <iostream>
 
 
@@ -642,7 +644,7 @@ namespace neural {
 
         nlohmann::json cuda_scene_config = full_config.value("cuda_scene", json::object());
 
-        if (cuda_scene_config.contains("fb_size")) {
+        if (cuda_scene_config.contains("fb_size") && !patched::args.res) {
             glfwSetWindowSize(m_backend->get_display().glfw_window(),
                               cuda_scene_config["fb_size"].at(0).get<int>(),
                               cuda_scene_config["fb_size"].at(1).get<int>());

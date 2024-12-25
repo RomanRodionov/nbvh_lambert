@@ -9,6 +9,8 @@
 
 #include <cudaProfiler.h>
 
+#include "utils/args.h"
+
 #include "FLIP.h"
 
 using precision_t = tcnn::network_precision_t;
@@ -369,7 +371,10 @@ namespace neural {
             if (m_accumulated_spp == m_max_accumulated_spp) {
 
                 if(m_training_step >= m_max_training_steps) {
-                    m_inference_timer.write_last_to_stream(std::cout);
+                    if(!patched::args.inference_mode) {
+                        save_config(true);
+                    }
+                    m_inference_timer.write_last_to_stream(std::cout, m_max_accumulated_spp);
                     m_train_callback();
                 }
                 

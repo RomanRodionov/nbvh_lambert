@@ -140,6 +140,9 @@ namespace neural {
         void load_camera_params(const float params[6], float fov);
         void set_max_spp(int spp);
         void set_resolution(int w, int h);
+
+        void load_config(bool load_bvh_and_network);
+
     private:
         CudaSceneData learning_scene_data();
 
@@ -168,8 +171,6 @@ namespace neural {
         void save_image();
 
         void save_config(bool save_bvh_and_network);
-
-        void load_config(bool load_bvh_and_network);
 
         void save_network_model(const std::string &filename);
         void load_network_model(const std::string &filename);
