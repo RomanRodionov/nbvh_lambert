@@ -13,6 +13,9 @@
 
 #include <tiny-cuda-nn/loss.h>
 
+#include <iostream>
+
+
 namespace ntwr {
 namespace neural {
 
@@ -561,6 +564,8 @@ namespace neural {
         m_backend->update_camera(scene_camera);
     }
 
+
+
     void NeuralBVHRenderer::load_camera_params(const float params[6], float fov)
     {
         auto &scene_camera = m_backend->get_camera();
@@ -579,6 +584,11 @@ namespace neural {
         scene_camera.set_transform(camera_mat4);
         scene_camera.set_fovy_from_radian(glm::radians(fov));
         m_backend->update_camera(scene_camera);
+
+        auto o = scene_camera.origin();
+        std::cout << o.x << " " << o.y << " " << o.z << std::endl;
+        auto d = scene_camera.dir();
+        std::cout << o.x << " " << o.y << " " << o.z << std::endl;
     }
 
     void NeuralBVHRenderer::set_max_spp(int spp)

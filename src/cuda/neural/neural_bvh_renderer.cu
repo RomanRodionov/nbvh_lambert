@@ -369,6 +369,7 @@ namespace neural {
             if (m_accumulated_spp == m_max_accumulated_spp) {
 
                 if(m_training_step >= m_max_training_steps) {
+                    m_inference_timer.write_last_to_stream(std::cout);
                     m_train_callback();
                 }
                 

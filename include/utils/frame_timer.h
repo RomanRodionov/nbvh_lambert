@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <ostream>
 
 #include "utils/logger.h"
 
@@ -28,6 +29,11 @@ public:
         const std::chrono::duration<double, std::milli> frame_duration = current_time - start_time;
         start_time                                                     = current_time;
         frame_times.push_back(frame_duration.count());
+    }
+
+    void write_last_to_stream(std::ostream &str)
+    {
+        str << frame_times.back() << std::endl;
     }
 
     void write_to_file(std::string filename, std::vector<float> *losses = nullptr)
