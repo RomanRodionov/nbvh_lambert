@@ -8,7 +8,7 @@ namespace patched {
     {
         std::optional<std::string> camera_file;
         std::optional<std::string> output_file;
-        std::optional<std::string> envmap_file
+        std::optional<std::string> envmap_file;
 
         int spp = -1;
 
