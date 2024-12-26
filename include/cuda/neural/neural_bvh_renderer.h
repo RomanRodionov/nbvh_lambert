@@ -142,6 +142,8 @@ namespace neural {
         void set_resolution(int w, int h);
         void set_nbvh_params(int params[3]);
 
+        void set_envmap(const std::string &path);
+
         void load_config(bool load_bvh_and_network);
 
     private:

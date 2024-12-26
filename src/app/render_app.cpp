@@ -385,8 +385,11 @@ void RenderApp::run()
        nrenderer->set_max_spp(patched::args.spp);
     }
     if(patched::args.use_nbvh_params) {
-        std::cout << "Set params" << std::endl ;
+        //std::cout << "Set params" << std::endl ;
         nrenderer->set_nbvh_params(patched::args.nbvh_param);
+    }
+    if(patched::args.envmap_file) {
+        nrenderer->set_envmap(*patched::args.envmap_file);
     }
 
     bool changed_renderer  = false;

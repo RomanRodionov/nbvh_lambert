@@ -149,6 +149,7 @@ public:
     }
 
     void load_envmap_texture(std::string filename);
+    void load_envmap_texture_fullpath(std::string path);
     std::string envmap_filename()
     {
         return std::string(m_envmap_filename);

@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
     }
     /*patch begin*/
     int c;
-    while((c = getopt(argc, argv, "n:o:c:s:r:t:i")) != -1) {
+    while((c = getopt(argc, argv, "e:n:o:c:s:r:t:i")) != -1) {
         switch(c) {
         case 'o':
             args.output_file.emplace(optarg);
@@ -101,8 +101,11 @@ int main(int argc, char *argv[])
         case 'i':
             args.inference_mode = true;
             break;
+        case 'e':
+            args.envmap_file.emplace(optarg);
+            break;
         case '?':
-            std::cerr << "[!] Unknown argument." << std::endl; 
+            std::cerr << "Unknown argument." << std::endl; 
             return false;
         }
     }  

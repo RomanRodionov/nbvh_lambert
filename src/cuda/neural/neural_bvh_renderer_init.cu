@@ -425,6 +425,11 @@ namespace neural {
 
     }
 
+    void NeuralBVHRenderer::set_envmap(const std::string &path)
+    {
+        m_backend->load_envmap_texture_fullpath(path);
+    }
+
     void NeuralBVHRenderer::save_config(bool save_bvh_and_network)
     {
         const std::string base_config_name    = std::string(m_base_config_name);
@@ -683,9 +688,11 @@ namespace neural {
 
         m_backend->m_cuda_scene_constants.from_json(cuda_scene_config.value("scene_constants", json::object()));
 
-        strcpy(m_backend->m_envmap_filename,
-               cuda_scene_config.value("envmap_filename", std::string(m_backend->m_envmap_filename)).c_str());
-        m_backend->load_envmap_texture(std::string(m_backend->m_envmap_filename));
+        if (!patched::args.envmap_file) {
+            strcpy(m_backend->m_envmap_filename,
+                   cuda_scene_config.value("envmap_filename", std::string(m_backend->m_envmap_filename)).c_str());
+            m_backend->load_envmap_texture(std::string(m_backend->m_envmap_filename));
+        }
 
         nlohmann::json neural_bvh_renderer_config = full_config.value("neural_bvh_renderer", json::object());
 

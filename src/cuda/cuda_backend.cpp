@@ -443,30 +443,36 @@ void CudaBackend::create_cuda_textures_buffer(const Scene &scene)
 
 void CudaBackend::load_envmap_texture(std::string envmap_filename)
 {
+    std::filesystem::path envmap_path =
+        m_scene_filename.parent_path().parent_path().parent_path() / "hdris" / envmap_filename;
+
+    load_envmap_texture_fullpath(envmap_path);
+}
+
+void CudaBackend::load_envmap_texture_fullpath(std::string envmap_path)
+{
     if (m_envmap_texture_array) {
         CUDA_CHECK(cudaFreeArray(m_envmap_texture_array));
         CUDA_CHECK(cudaDestroyTextureObject(m_envmap_texture_object));
     }
     // Yes, that's a lot of parenting but that's where it makes sense to store them for now.
-    std::filesystem::path envmap_path =
-        m_scene_filename.parent_path().parent_path().parent_path() / "hdris" / envmap_filename;
 
     int width, height;
     int channels = 4;
     float *data;  // width * height * RGBA
     const char *err = nullptr;
 
-    int ret = LoadEXR(&data, &width, &height, envmap_path.string().c_str(), &err);
+    int ret = LoadEXR(&data, &width, &height, envmap_path.c_str(), &err);
     if (ret != TINYEXR_SUCCESS) {
         width  = 4;
         height = 4;
-        logger(LogLevel::Warn, "Envmap not found at %s, setting white image", envmap_path.string().c_str());
+        logger(LogLevel::Warn, "Envmap not found at %s, setting white image", envmap_path.c_str());
         data = (float *)malloc(width * height * channels * sizeof(float));
         for (size_t i = 0; i < width * height * channels; i++) {
             data[i] = 1.0f;
         }
     } else {
-        logger(LogLevel::Info, "Loaded Envmap from %s", envmap_path.string().c_str());
+        logger(LogLevel::Info, "Loaded Envmap from %s", envmap_path.c_str());
     }
 
     cudaResourceDesc res_desc = {};
