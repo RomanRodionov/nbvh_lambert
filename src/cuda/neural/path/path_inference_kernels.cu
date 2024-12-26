@@ -10,6 +10,7 @@
 
 #include "cuda/base/material.cuh"
 #include "cuda/utils/rendering.cuh"
+#include "cuda/neural/constants.cuh"
 
 namespace ntwr {
 namespace neural::path {
@@ -441,13 +442,6 @@ namespace neural::path {
                                                                      bool last_tlas_traversal,
                                                                      uint32_t max_depth)
     {
-        glm::vec3 direct    = {1, 1, 1};
-        glm::vec3 dir_color = {0.6, 0.9, 0.6};
-        glm::vec3 amb_color = {0.1, 0.05, 0.05};
-        glm::vec3 bg_color  = {0, 0, 0};
-
-        direct = normalize(direct);
-
         int ray_idx = blockIdx.x * blockDim.x + threadIdx.x;
         if (ray_idx >= n_elements)
             return;
@@ -549,11 +543,11 @@ namespace neural::path {
 
         // Lambert light for direct hits only
         if (ray_depth == 1 && neural_hit) {
-            illumination = dir_color * clamp(dot(direct, its_normal), 0.f, 1.f) + amb_color;
+            illumination = dir_int * dir_color * clamp(dot(normalize(direct), its_normal), 0.f, 1.f) + amb_int * amb_color;
         }
         else
         {
-            illumination = {0, 0, 0};
+            illumination = bg_color;
         }
 
         accumulate_pixel_value(sample_idx, pixel_coord, illumination, 1.0f);

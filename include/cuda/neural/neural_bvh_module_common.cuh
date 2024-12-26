@@ -11,6 +11,7 @@
 #include "cuda/neural/neural_bvh_module_constants.cuh"
 #include "cuda/neural/neural_bvh_renderer_constants.cuh"
 #include "cuda/neural/neural_bvh_renderer_kernels.cuh"
+#include "cuda/neural/constants.cuh"
 
 namespace ntwr {
 
@@ -542,7 +543,7 @@ namespace neural {
                                                           init_neural_query_result);
 
         if (tlas_traversal_done) {
-            illumination = {0.f, 0.f, 0.f};
+            illumination = bg_color;
             accumulate_pixel_value(sample_idx, pixel_coord, illumination, 1.0f);
             return;
         }

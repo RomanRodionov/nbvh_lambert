@@ -15,7 +15,6 @@
 
 namespace ntwr {
 
-
 static constexpr size_t OUTPUT_FILENAME_SIZE = 512;
 
 class RenderApp {
