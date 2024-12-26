@@ -302,6 +302,7 @@ namespace neural::path {
         void destroy_learning_data();
 
         void neural_path_tracing(uint32_t accumulated_spp, uint32_t sample_offset, const NeuralBVH &neural_bvh);
+        void neural_direct_light(uint32_t accumulated_spp, uint32_t sample_offset, const NeuralBVH &neural_bvh);
         void neural_bvh_traversal(uint32_t accumulated_spp,
                                   const NeuralBVH &neural_bvh,
                                   uint32_t n_active_rays,

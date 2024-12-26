@@ -136,6 +136,106 @@ namespace neural::path {
         }
     }
 
+    void NeuralPathModule::neural_direct_light(uint32_t accumulated_spp,
+                                               uint32_t sample_offset,
+                                               const NeuralBVH &neural_bvh)
+    {
+        CudaSceneData scene_data    = NeuralPathModule::scene_data();
+        cudaStream_t default_stream = 0;
+
+        cudaStream_t normal_rays_stream;
+        CUDA_CHECK(cudaStreamCreate(&normal_rays_stream));
+
+        uint32_t n_all_active_rays = m_cuda_backend->framebuffer_size_flat();
+
+        uint32_t n_neural_active_rays = 0;
+        uint32_t n_normal_active_rays = 0;
+
+        CUDA_CHECK(cudaMemsetAsync(m_active_neural_rays_counter, 0, sizeof(uint32_t), default_stream));
+        CUDA_CHECK(cudaMemsetAsync(m_active_normal_rays_counter, 0, sizeof(uint32_t), default_stream));
+
+        // Populate rays and results with first traversal step
+        tcnn::linear_kernel(hybrid_camera_raygen_and_hybrid_first_hit_and_traversal_black,
+                            0,
+                            default_stream,
+                            n_all_active_rays,
+                            accumulated_spp,
+                            sample_offset,
+                            m_normal_traversal_data,
+                            neural_bvh,
+                            m_wavefront_neural_data[0].traversal_data,
+                            m_wavefront_neural_data[0].results,
+                            scene_data,
+                            m_active_neural_rays_counter,
+                            m_active_normal_rays_counter);
+
+        CUDA_CHECK(cudaMemcpyAsync(&n_neural_active_rays,
+                                   m_active_neural_rays_counter,
+                                   sizeof(uint32_t),
+                                   cudaMemcpyDeviceToHost,
+                                   default_stream));
+        CUDA_CHECK(cudaMemcpyAsync(&n_normal_active_rays,
+                                   m_active_normal_rays_counter,
+                                   sizeof(uint32_t),
+                                   cudaMemcpyDeviceToHost,
+                                   normal_rays_stream));
+        CUDA_CHECK(cudaStreamSynchronize(default_stream));
+
+        if (n_normal_active_rays == 0 && n_neural_active_rays == 0) {
+            return;
+        }
+
+        CUDA_CHECK(cudaMemsetAsync(m_hybrid_its_counter, 0, sizeof(uint32_t), default_stream));
+
+        tcnn::linear_kernel(non_neural_bvh_intersection,
+                            0,
+                            normal_rays_stream,
+                            n_normal_active_rays,
+                            accumulated_spp,
+                            m_normal_traversal_data,
+                            m_hybrid_intersection_data,
+                            scene_data,
+                            m_hybrid_its_counter);
+
+        // One neural bounce
+        neural_bvh_traversal(accumulated_spp, neural_bvh, n_neural_active_rays, m_hybrid_its_counter);
+
+        // Synchronize all streams
+        CUDA_SYNC_CHECK();
+
+        uint32_t n_active_hybrid_intersection = 0;
+
+        CUDA_CHECK(cudaMemcpyAsync(
+            &n_active_hybrid_intersection, m_hybrid_its_counter, sizeof(uint32_t), cudaMemcpyDeviceToHost));
+        CUDA_CHECK(cudaMemsetAsync(m_active_neural_rays_counter, 0, sizeof(uint32_t), default_stream));
+        CUDA_CHECK(cudaMemsetAsync(m_active_normal_rays_counter, 0, sizeof(uint32_t), default_stream));
+
+        tcnn::linear_kernel(scatter_lambert,
+                            0,
+                            default_stream,
+                            n_active_hybrid_intersection,
+                            accumulated_spp,
+                            m_hybrid_intersection_data,
+                            m_wavefront_neural_data[0].traversal_data,
+                            m_wavefront_neural_data[0].results,
+                            m_normal_traversal_data,
+                            neural_bvh,
+                            scene_data,
+                            m_active_neural_rays_counter,
+                            m_active_normal_rays_counter,
+                            false,
+                            m_max_depth);
+
+        CUDA_CHECK(cudaMemcpyAsync(
+            &n_normal_active_rays, m_active_normal_rays_counter, sizeof(uint32_t), cudaMemcpyDeviceToHost));
+        CUDA_CHECK(cudaMemcpyAsync(
+            &n_neural_active_rays, m_active_neural_rays_counter, sizeof(uint32_t), cudaMemcpyDeviceToHost));
+
+
+        CUDA_CHECK(cudaStreamDestroy(normal_rays_stream));
+        CUDA_SYNC_CHECK();
+    }
+
     void NeuralPathModule::neural_path_tracing(uint32_t accumulated_spp,
                                                uint32_t sample_offset,
                                                const NeuralBVH &neural_bvh)
@@ -250,7 +350,8 @@ namespace neural::path {
     {
         switch (m_path_module_const.output_mode) {
         case OutputMode::NeuralPathTracing:
-            neural_path_tracing(accumulated_spp, sample_offset, neural_bvh);
+            neural_direct_light(accumulated_spp, sample_offset, neural_bvh);
+            //neural_path_tracing(accumulated_spp, sample_offset, neural_bvh);
             break;
         default:
             UNREACHABLE();

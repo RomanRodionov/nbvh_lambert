@@ -484,6 +484,70 @@ namespace neural {
         }
     }
 
+    /* This function needs the following callback signature
+    using InitNeuralTraversalResult = void (*)(uint32_t ray_idx, NeuralTraversalResult &results);
+    using BackgroundHitResult = void (*)(const Ray3f &ray);
+    */
+    template <typename NeuralTraversalResult, typename InitNeuralTraversalResult, typename BackgroundHitResult>
+    NTWR_DEVICE void hybrid_camera_raygen_and_intersect_neural_bvh_black(uint32_t ray_idx,
+                                                                   int sample_idx,
+                                                                   int rnd_sample_offset,
+                                                                   NormalTraversalData &normal_traversal_data,
+                                                                   const NeuralBVH &neural_bvh,
+                                                                   NeuralTraversalData &neural_traversal_data,
+                                                                   NeuralTraversalResult &neural_results,
+                                                                   const CudaSceneData &scene_data,
+                                                                   uint32_t *active_neural_counter,
+                                                                   uint32_t *active_normal_counter,
+                                                                   InitNeuralTraversalResult init_neural_query_result,
+                                                                   BackgroundHitResult background_hit_result)
+    {
+        glm::uvec2 pixel_coord = glm::uvec2(ray_idx % fb_size.x, ray_idx / fb_size.x);
+
+        LCGRand rng = get_lcg_rng(sample_idx, rnd_sample_offset, ray_idx);
+        float xf    = (float(pixel_coord.x) + lcg_randomf(rng)) / float(fb_size.x);
+        float yf    = (float(pixel_coord.y) + lcg_randomf(rng)) / float(fb_size.y);
+
+        Ray3f ray         = camera_raygen(xf, yf);
+        uint8_t ray_depth = 1;
+
+        glm::vec3 illumination = glm::vec3(0.f);
+        glm::vec3 throughput   = glm::vec3(1.f);
+
+        uint32_t local_tlas_stack[TLAS_STACK_SIZE];
+        local_tlas_stack[0]       = 0;
+        int local_tlas_stack_size = 1;
+
+        bool tlas_traversal_done =
+            tlas_traversal_and_fill_next_hybrid_traversal(sample_idx,
+                                                          ray_idx,  // for the first traversal this is just the ray_idx
+                                                          ray,
+                                                          ray_depth,
+                                                          FLT_MAX,
+                                                          0u,
+                                                          nullptr,
+                                                          nullptr,
+                                                          illumination,
+                                                          throughput,
+                                                          rng,
+                                                          local_tlas_stack,
+                                                          local_tlas_stack_size,
+                                                          normal_traversal_data,
+                                                          neural_bvh,
+                                                          neural_traversal_data,
+                                                          neural_results,
+                                                          scene_data,
+                                                          active_neural_counter,
+                                                          active_normal_counter,
+                                                          init_neural_query_result);
+
+        if (tlas_traversal_done) {
+            illumination = {0.f, 0.f, 0.f};
+            accumulate_pixel_value(sample_idx, pixel_coord, illumination, 1.0f);
+            return;
+        }
+    }
+
     // Should return whether to continue or stop the traversal, optionally a depth estimate can be computed
     /* This function needs the following callback signature
         using ProcessNeuralBvhTraversalStep = bool (*)(uint32_t ray_idx,

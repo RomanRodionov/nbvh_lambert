@@ -26,6 +26,17 @@ namespace neural::path {
                                                                              CudaSceneData scene_data,
                                                                              uint32_t *active_neural_counter,
                                                                              uint32_t *active_normal_counter);
+                                                                        
+    NTWR_KERNEL void hybrid_camera_raygen_and_hybrid_first_hit_and_traversal_black(uint32_t n_elements,
+                                                                             int sample_idx,
+                                                                             int rnd_sample_offset,
+                                                                             NormalTraversalData normal_traversal_data,
+                                                                             NeuralBVH neural_bvh,
+                                                                             NeuralTraversalData neural_traversal_data,
+                                                                             NeuralTraversalResult neural_results,
+                                                                             CudaSceneData scene_data,
+                                                                             uint32_t *active_neural_counter,
+                                                                             uint32_t *active_normal_counter);
 
     NTWR_KERNEL void split_screen_hybrid_camera_raygen_and_hybrid_first_hit_and_traversal(
         uint32_t n_elements,
@@ -67,6 +78,19 @@ namespace neural::path {
                                                  uint32_t *its_counter);
 
     NTWR_KERNEL void hybrid_scatter_and_get_next_tlas_traversal_step(const uint32_t n_elements,
+                                                                     int sample_idx,
+                                                                     HybridIntersectionResult its_result_data,
+                                                                     NeuralTraversalData next_neural_traversal_data,
+                                                                     NeuralTraversalResult next_neural_results,
+                                                                     NormalTraversalData next_normal_traversal_data,
+                                                                     NeuralBVH neural_bvh,
+                                                                     CudaSceneData scene_data,
+                                                                     uint32_t *active_neural_counter,
+                                                                     uint32_t *active_normal_counter,
+                                                                     bool last_tlas_traversal,
+                                                                     uint32_t max_depth);
+    
+    NTWR_KERNEL void scatter_lambert(const uint32_t n_elements,
                                                                      int sample_idx,
                                                                      HybridIntersectionResult its_result_data,
                                                                      NeuralTraversalData next_neural_traversal_data,

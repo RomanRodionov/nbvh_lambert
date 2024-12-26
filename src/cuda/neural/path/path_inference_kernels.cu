@@ -428,6 +428,137 @@ namespace neural::path {
         }
     }
 
+    NTWR_KERNEL void scatter_lambert(const uint32_t n_elements,
+                                                                     int sample_idx,
+                                                                     HybridIntersectionResult hybrid_its_result,
+                                                                     NeuralTraversalData next_neural_traversal_data,
+                                                                     NeuralTraversalResult next_neural_results,
+                                                                     NormalTraversalData next_normal_traversal_data,
+                                                                     NeuralBVH neural_bvh,
+                                                                     CudaSceneData scene_data,
+                                                                     uint32_t *active_neural_counter,
+                                                                     uint32_t *active_normal_counter,
+                                                                     bool last_tlas_traversal,
+                                                                     uint32_t max_depth)
+    {
+        glm::vec3 direct    = {1, 1, 1};
+        glm::vec3 dir_color = {0.6, 0.9, 0.6};
+        glm::vec3 amb_color = {0.1, 0.05, 0.05};
+        glm::vec3 bg_color  = {0, 0, 0};
+
+        direct = normalize(direct);
+
+        int ray_idx = blockIdx.x * blockDim.x + threadIdx.x;
+        if (ray_idx >= n_elements)
+            return;
+
+        // Get pixel coordinate
+        uint32_t pixel_coord_1d = hybrid_its_result.pixel_coord[ray_idx];
+        glm::uvec2 pixel_coord;
+        pixel_coord.x = pixel_coord_1d % fb_size.x;
+        pixel_coord.y = pixel_coord_1d / fb_size.x;
+
+        const Ray3f ray        = hybrid_its_result.get_ray(ray_idx);
+        uint8_t ray_depth      = hybrid_its_result.ray_depth[ray_idx];
+        glm::vec3 throughput   = hybrid_its_result.get_throughput(ray_idx);
+        LCGRand rng            = hybrid_its_result.get_rng(ray_idx);
+        float best_t           = hybrid_its_result.t[ray_idx];
+        glm::vec3 illumination = hybrid_its_result.illumination[ray_idx];
+        uint8_t valid_hit      = hybrid_its_result.valid_hit[ray_idx];
+
+        if (last_tlas_traversal) {
+            illumination = bg_color;
+            accumulate_pixel_value(sample_idx, pixel_coord, illumination, 1.0f);
+            return;
+        }
+
+        bool neural_hit = valid_hit == NEURAL_TRAVERSAL_HIT;
+
+        assert(valid_hit != 0 || hybrid_its_result.t[ray_idx] == FLT_MAX);
+        assert(!neural_hit || !bvh_const.ignore_neural_blas);
+
+        // Check the next tlas traversal, if the traversal is done we will correctly update the intersection and start a
+        // new traversal
+        uint32_t local_tlas_stack[TLAS_STACK_SIZE];
+        int local_tlas_stack_size = hybrid_its_result.tlas_stack_size[ray_idx];
+
+        if (local_tlas_stack_size != 0) {
+            uint32_t src_index;
+            for (uint32_t stack_idx = 0; stack_idx < hybrid_its_result.tlas_stack_size[ray_idx]; stack_idx++) {
+                src_index                   = ray_idx + stack_idx * fb_size_flat;
+                local_tlas_stack[stack_idx] = hybrid_its_result.tlas_stack[src_index];
+            }
+
+            bool tlas_traversal_done =
+                tlas_traversal_and_fill_next_hybrid_traversal(sample_idx,
+                                                              pixel_coord_1d,
+                                                              ray,
+                                                              ray_depth,
+                                                              best_t,
+                                                              valid_hit,
+                                                              &hybrid_its_result.normal_or_uv[ray_idx],
+                                                              &hybrid_its_result.albedo_or_mesh_prim_id[ray_idx],
+                                                              illumination,
+                                                              throughput,
+                                                              rng,
+                                                              local_tlas_stack,
+                                                              local_tlas_stack_size,
+                                                              next_normal_traversal_data,
+                                                              neural_bvh,
+                                                              next_neural_traversal_data,
+                                                              next_neural_results,
+                                                              scene_data,
+                                                              active_neural_counter,
+                                                              active_normal_counter,
+                                                              init_neural_traversal_result);
+            // In case we still have other blas to process return
+            if (!tlas_traversal_done) {
+                return;
+            }
+        }
+
+        assert(local_tlas_stack_size == 0);
+
+        assert(path_module_const.output_mode == OutputMode::NeuralPathTracing);
+
+        const bool its_found = (valid_hit != 0);
+        if (!its_found) {
+            accumulate_pixel_value(sample_idx, pixel_coord, bg_color, 1.0f);
+            return;
+        }
+        // Treat differently based on neural hit or non neural hit here
+        CudaMaterial bsdf;
+        const glm::vec3 wo = -ray.d;
+        glm::vec3 its_normal;
+        glm::vec3 hit_pos;
+
+        if (neural_hit) {
+            its_normal      = hybrid_its_result.get_normal(ray_idx);
+            hit_pos         = ray(best_t);
+        } else {
+            const PreliminaryItsData pi = hybrid_its_result.get_preliminary_its_data(ray_idx);
+            const CudaBLAS &geom        = scene_data.tlas.mesh_bvhs[pi.mesh_idx];
+            ItsData its                 = geom.compute_its_data(pi, scene_data.materials, scene_data.textures);
+            hit_pos                     = its.position;
+            its_normal                  = its.sh_normal;
+        }
+        glm::vec3 wi;
+
+        glm::vec3 sh_normal, tangent, bitangent;
+        shading_frame(wo, its_normal, sh_normal, tangent, bitangent);
+
+        // Lambert light for direct hits only
+        if (ray_depth == 1 && neural_hit) {
+            illumination = dir_color * clamp(dot(direct, its_normal), 0.f, 1.f) + amb_color;
+        }
+        else
+        {
+            illumination = {0, 0, 0};
+        }
+
+        accumulate_pixel_value(sample_idx, pixel_coord, illumination, 1.0f);
+    }
+
     template <typename InitNeuralTraversalResult>
     NTWR_DEVICE void camera_raygen_and_hybrid_first_hit_and_traversal(
         int32_t ray_idx,
@@ -553,6 +684,35 @@ namespace neural::path {
             return;
 
         hybrid_camera_raygen_and_intersect_neural_bvh(i,
+                                                      sample_idx,
+                                                      rnd_sample_offset,
+                                                      normal_traversal_data,
+                                                      neural_bvh,
+                                                      neural_traversal_data,
+                                                      neural_results,
+                                                      scene_data,
+                                                      active_neural_counter,
+                                                      active_normal_counter,
+                                                      init_neural_traversal_result,
+                                                      background_hit_eval);
+    }
+
+    NTWR_KERNEL void hybrid_camera_raygen_and_hybrid_first_hit_and_traversal_black(uint32_t n_elements,
+                                                                             int sample_idx,
+                                                                             int rnd_sample_offset,
+                                                                             NormalTraversalData normal_traversal_data,
+                                                                             NeuralBVH neural_bvh,
+                                                                             NeuralTraversalData neural_traversal_data,
+                                                                             NeuralTraversalResult neural_results,
+                                                                             CudaSceneData scene_data,
+                                                                             uint32_t *active_neural_counter,
+                                                                             uint32_t *active_normal_counter)
+    {
+        int i = blockIdx.x * blockDim.x + threadIdx.x;
+        if (i >= n_elements)
+            return;
+
+        hybrid_camera_raygen_and_intersect_neural_bvh_black(i,
                                                       sample_idx,
                                                       rnd_sample_offset,
                                                       normal_traversal_data,
